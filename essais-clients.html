@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Essais Clients LVA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #14161b;
+    --surface: #1d2027;
+    --surface-2: #262a33;
+    --line: #333844;
+    --text: #edeff2;
+    --text-dim: #9aa1ad;
+    --accent: #ff6a2b;
+    --accent-dim: #7a3a1c;
+    --ok: #4caf7d;
+    --danger: #e0523f;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  body{padding-bottom:40px;}
+  .plate{font-family:'Oswald',sans-serif; letter-spacing:2px; text-transform:uppercase;}
+
+  header{
+    position:sticky; top:0; z-index:20;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding:16px 18px 12px;
+  }
+  header .top-row{display:flex; align-items:center; justify-content:space-between;}
+  header h1{font-size:17px; margin:0; font-weight:700; letter-spacing:0.2px;}
+  header h1 span{color:var(--accent);}
+  .site-chip{
+    font-size:12.5px; color:var(--text-dim); background:var(--surface);
+    border:1px solid var(--line); padding:6px 10px; border-radius:20px;
+    display:flex; align-items:center; gap:6px; cursor:pointer;
+  }
+  .site-chip b{color:var(--text); font-weight:600;}
+
+  .tabs{display:flex; gap:8px; margin-top:14px;}
+  .tab-btn{
+    flex:1; padding:10px 0; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface); color:var(--text-dim); font-size:13.5px; font-weight:600;
+    text-align:center;
+  }
+  .tab-btn.active{background:var(--accent); border-color:var(--accent); color:#191008;}
+
+  main{padding:18px; max-width:520px; margin:0 auto;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:14px;}
+
+  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .step-num{
+    width:24px; height:24px; border-radius:50%; background:var(--surface-2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--text-dim); flex-shrink:0;
+  }
+  .step-num.done{background:var(--ok); border-color:var(--ok); color:#0e1b14;}
+  .step-title{font-size:14.5px; font-weight:600;}
+  .step-sub{font-size:12.5px; color:var(--text-dim); margin:2px 0 0 34px;}
+
+  .photo-zone{margin-left:34px;}
+  .photo-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:14px; border-radius:10px; border:1.5px dashed var(--line);
+    background:var(--surface-2); color:var(--text-dim); font-size:13.5px; font-weight:600;
+  }
+  .photo-btn.filled{border-style:solid; border-color:var(--ok); color:var(--text);}
+  input[type=file]{display:none;}
+  .preview{width:100%; margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid var(--line); display:none;}
+  .preview img{width:100%; display:block;}
+
+  .field{margin-left:34px;}
+  .field input[type=text]{
+    width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--text); font-size:20px; font-weight:600;
+  }
+  .field input[type=text]::placeholder{color:var(--text-dim); font-weight:500; font-size:14px; letter-spacing:0;}
+  .datetime-display{
+    margin-left:34px; padding:12px 14px; border-radius:10px; background:var(--surface-2);
+    border:1px solid var(--line); font-size:14.5px; color:var(--text-dim);
+  }
+  .datetime-display b{color:var(--text); font-weight:600;}
+
+  .engagement-text{margin-left:34px; font-size:12.5px; line-height:1.55; color:var(--text-dim); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px 14px;}
+
+  .sig-wrap{margin-left:34px;}
+  canvas#sigPad{
+    width:100%; height:160px; border-radius:10px; border:1px solid var(--line);
+    background:#fff; touch-action:none; display:block;
+  }
+  .sig-actions{display:flex; justify-content:space-between; align-items:center; margin-top:8px;}
+  .sig-hint{font-size:12px; color:var(--text-dim);}
+  .link-btn{background:none; border:none; color:var(--accent); font-size:13px; font-weight:600; padding:4px;}
+
+  .submit-btn{
+    width:100%; padding:16px; border-radius:12px; border:none; background:var(--accent);
+    color:#1a0f07; font-size:15.5px; font-weight:700; margin-top:6px;
+  }
+  .submit-btn:disabled{background:var(--surface-2); color:var(--text-dim);}
+  .status-line{text-align:center; font-size:13px; color:var(--text-dim); margin-top:10px; min-height:16px;}
+
+  .essai-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .essai-immat{font-family:'Oswald',sans-serif; font-size:22px; letter-spacing:1.5px; font-weight:600;}
+  .essai-heure{font-size:12.5px; color:var(--text-dim); margin-top:2px;}
+  .close-btn{padding:10px 16px; border-radius:9px; border:1px solid var(--accent); background:transparent; color:var(--accent); font-weight:600; font-size:13px;}
+  .empty-state{text-align:center; color:var(--text-dim); font-size:14px; padding:40px 20px;}
+
+  .overlay{position:fixed; inset:0; background:rgba(10,11,14,0.75); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .overlay.active{display:flex;}
+  .modal{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; width:100%; max-width:340px;}
+  .modal h3{margin:0 0 8px; font-size:16px;}
+  .modal p{font-size:13.5px; color:var(--text-dim); margin:0 0 18px; line-height:1.5;}
+  .modal .row{display:flex; gap:10px;}
+  .modal button{flex:1; padding:12px; border-radius:9px; font-weight:600; font-size:14px; border:1px solid var(--line);}
+  .modal .confirm{background:var(--accent); border-color:var(--accent); color:#1a0f07;}
+  .modal .cancel{background:transparent; color:var(--text-dim);}
+
+  .site-select-screen{padding:40px 24px; text-align:center;}
+  .site-select-screen h2{font-size:19px; margin-bottom:4px;}
+  .site-select-screen p{color:var(--text-dim); font-size:13.5px; margin-bottom:26px;}
+  .site-option{
+    display:block; width:100%; padding:16px; margin-bottom:10px; border-radius:12px;
+    border:1px solid var(--line); background:var(--surface); color:var(--text); font-size:15px; font-weight:600; text-align:left;
+  }
+  .site-option:active{border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<div id="siteSelectScreen" class="site-select-screen">
+  <h2>Essais <span style="color:var(--accent)">Clients</span></h2>
+  <p>Sélectionne ton site pour commencer</p>
+  <button class="site-option" data-site="Challans">Challans</button>
+  <button class="site-option" data-site="Mouilleron-le-Captif">Mouilleron-le-Captif</button>
+  <button class="site-option" data-site="Les Sables d'Olonne">Les Sables d'Olonne</button>
+</div>
+
+<div id="appShell" style="display:none;">
+  <header>
+    <div class="top-row">
+      <h1>Essais <span>Clients</span></h1>
+      <div class="site-chip" id="siteChip">📍 <b id="siteChipLabel"></b></div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-screen="nouveau">Nouvel essai</button>
+      <button class="tab-btn" data-screen="encours">Essais en cours</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ÉCRAN NOUVEL ESSAI -->
+    <section id="screen-nouveau" class="screen active">
+
+      <div class="card">
+        <div class="step-head"><div class="step-num" id="num1">1</div><div><div class="step-title">Photo du permis de conduire</div></div></div>
+        <div class="photo-zone">
+          <label class="photo-btn" id="btnPermis" for="inputPermis">📷 Prendre en photo</label>
+          <input type="file" accept="image/*" capture="environment" id="inputPermis">
+          <div class="preview" id="previewPermis"><img id="imgPermis"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="step-head"><div class="step-num" id="num2">2</div><div><div class="step-title">Photo de la plaque d'immatriculation</div></div></div>
+        <div class="photo-zone">
+          <label class="photo-btn" id="btnPlaque" for="inputPlaque">📷 Prendre en photo</label>
+          <input type="file" accept="image/*" capture="environment" id="inputPlaque">
+          <div class="preview" id="previewPlaque"><img id="imgPlaque"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="step-head"><div class="step-num" id="num3">3</div><div><div class="step-title">Immatriculation</div><div class="step-sub">Saisie manuelle</div></div></div>
+        <div class="field"><input type="text" id="inputImmat" class="plate" placeholder="AA-123-AA"></div>
+      </div>
+
+      <div class="card">
+        <div class="step-head"><div class="step-num" id="num4">4</div><div><div class="step-title">Date et heure de début</div><div class="step-sub">Enregistrée automatiquement</div></div></div>
+        <div class="datetime-display" id="dateHeureDisplay">En attente de la 1ère photo…</div>
+      </div>
+
+      <div class="card">
+        <div class="step-head"><div class="step-num" id="num5">5</div><div><div class="step-title">Engagement et signature du client</div></div></div>
+        <div class="engagement-text" id="engagementText">
+          Le texte s'affichera ici une fois l'immatriculation saisie.
+        </div>
+        <div class="sig-wrap">
+          <canvas id="sigPad"></canvas>
+          <div class="sig-actions">
+            <span class="sig-hint">Signature du client ci-dessus</span>
+            <button class="link-btn" id="clearSig">Effacer</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" disabled>Générer le bon et enregistrer</button>
+      <div class="status-line" id="statusLine"></div>
+    </section>
+
+    <!-- ÉCRAN ESSAIS EN COURS -->
+    <section id="screen-encours" class="screen">
+      <div id="essaisList"></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="closeOverlay">
+  <div class="modal">
+    <h3 id="closeModalTitle">Clôturer l'essai</h3>
+    <p id="closeModalText"></p>
+    <div class="row">
+      <button class="cancel" id="closeCancel">Annuler</button>
+      <button class="confirm" id="closeConfirm">Confirmer le retour</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIGURATION ====================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyo181NImbixZ_Fu6Ij9lHg665pCqMc9lIUWJX72cYUOFy2-s7krGnF_Egdv0QiVrHz/exec';
+
+// ==================== ÉTAT ====================
+let currentSite = localStorage.getItem('lva_essais_site') || null;
+let dateHeureDebut = null; // Date de la 1ère photo
+let permisBase64 = null, plaqueBase64 = null;
+let sigEmpty = true;
+
+// ==================== SÉLECTION DU SITE ====================
+const siteSelectScreen = document.getElementById('siteSelectScreen');
+const appShell = document.getElementById('appShell');
+const siteChipLabel = document.getElementById('siteChipLabel');
+
+function initSite(){
+  if(currentSite){
+    siteSelectScreen.style.display = 'none';
+    appShell.style.display = 'block';
+    siteChipLabel.textContent = currentSite;
+    chargerEssaisEnCours();
+    // Le canvas de signature ne peut être dimensionné correctement
+    // qu'une fois l'appli (appShell) réellement visible à l'écran.
+    requestAnimationFrame(resizeSigCanvas);
+  } else {
+    siteSelectScreen.style.display = 'block';
+    appShell.style.display = 'none';
+  }
+}
+document.querySelectorAll('.site-option').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentSite = btn.dataset.site;
+    localStorage.setItem('lva_essais_site', currentSite);
+    initSite();
+  });
+});
+document.getElementById('siteChip').addEventListener('click', ()=>{
+  currentSite = null;
+  localStorage.removeItem('lva_essais_site');
+  initSite();
+});
+initSite();
+
+// ==================== ONGLETS ====================
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-' + btn.dataset.screen).classList.add('active');
+    if(btn.dataset.screen === 'encours') chargerEssaisEnCours();
+  });
+});
+
+// ==================== COMPRESSION IMAGE ====================
+function compressImage(file, maxWidth){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatDateHeure(d){
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} à ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function isoDateHeure(d){
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function updateDateTimeIfNeeded(){
+  if(!dateHeureDebut){
+    dateHeureDebut = new Date();
+    document.getElementById('dateHeureDisplay').innerHTML = `<b>${formatDateHeure(dateHeureDebut)}</b>`;
+    document.getElementById('num4').classList.add('done');
+    document.getElementById('num4').textContent = '✓';
+  }
+}
+
+// ==================== PHOTO PERMIS ====================
+document.getElementById('inputPermis').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  updateDateTimeIfNeeded();
+  const dataUrl = await compressImage(file, 1400);
+  permisBase64 = dataUrl.split(',')[1];
+  document.getElementById('imgPermis').src = dataUrl;
+  document.getElementById('previewPermis').style.display = 'block';
+  const btn = document.getElementById('btnPermis');
+  btn.classList.add('filled'); btn.textContent = '✓ Photo prise — reprendre';
+  document.getElementById('num1').classList.add('done'); document.getElementById('num1').textContent = '✓';
+  checkFormComplete();
+});
+
+// ==================== PHOTO PLAQUE ====================
+document.getElementById('inputPlaque').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  updateDateTimeIfNeeded();
+  const dataUrl = await compressImage(file, 1400);
+  plaqueBase64 = dataUrl.split(',')[1];
+  document.getElementById('imgPlaque').src = dataUrl;
+  document.getElementById('previewPlaque').style.display = 'block';
+  const btn = document.getElementById('btnPlaque');
+  btn.classList.add('filled'); btn.textContent = '✓ Photo prise — reprendre';
+  document.getElementById('num2').classList.add('done'); document.getElementById('num2').textContent = '✓';
+  checkFormComplete();
+});
+
+// ==================== IMMATRICULATION ====================
+const inputImmat = document.getElementById('inputImmat');
+inputImmat.addEventListener('input', ()=>{
+  inputImmat.value = inputImmat.value.toUpperCase();
+  const immat = inputImmat.value.trim();
+  document.getElementById('num3').classList.toggle('done', immat.length >= 4);
+  document.getElementById('num3').textContent = immat.length >= 4 ? '✓' : '3';
+  document.getElementById('engagementText').textContent = immat.length >= 4
+    ? `En signant, le client reconnaît emprunter le véhicule immatriculé ${immat} dans le cadre d'un essai routier. Il s'engage à respecter le code de la route et les règles de circulation en vigueur, à disposer d'un permis de conduire valide, et à prendre à sa charge les dommages causés au véhicule ainsi que toute infraction (contravention, amende, PV) commise pendant la durée de l'essai.`
+    : `Le texte s'affichera ici une fois l'immatriculation saisie.`;
+  checkFormComplete();
+});
+
+// ==================== SIGNATURE ====================
+const sigCanvas = document.getElementById('sigPad');
+const sigCtx = sigCanvas.getContext('2d');
+function resizeSigCanvas(){
+  const ratio = window.devicePixelRatio || 1;
+  const rect = sigCanvas.getBoundingClientRect();
+  sigCanvas.width = rect.width * ratio;
+  sigCanvas.height = rect.height * ratio;
+  sigCtx.scale(ratio, ratio);
+  sigCtx.lineWidth = 2.2;
+  sigCtx.lineCap = 'round';
+  sigCtx.strokeStyle = '#14161b';
+}
+window.addEventListener('load', resizeSigCanvas);
+window.addEventListener('resize', resizeSigCanvas);
+
+let drawing = false, lastX = 0, lastY = 0;
+function getPos(evt){
+  const rect = sigCanvas.getBoundingClientRect();
+  const point = evt.touches ? evt.touches[0] : evt;
+  return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+}
+function startDraw(evt){ drawing = true; sigEmpty = false; const p = getPos(evt); lastX = p.x; lastY = p.y; checkFormComplete(); }
+function moveDraw(evt){
+  if(!drawing) return;
+  evt.preventDefault();
+  const p = getPos(evt);
+  sigCtx.beginPath(); sigCtx.moveTo(lastX, lastY); sigCtx.lineTo(p.x, p.y); sigCtx.stroke();
+  lastX = p.x; lastY = p.y;
+}
+function endDraw(){ drawing = false; }
+sigCanvas.addEventListener('mousedown', startDraw);
+sigCanvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+sigCanvas.addEventListener('touchstart', startDraw, {passive:true});
+sigCanvas.addEventListener('touchmove', moveDraw, {passive:false});
+sigCanvas.addEventListener('touchend', endDraw);
+
+document.getElementById('clearSig').addEventListener('click', ()=>{
+  sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+  sigEmpty = true;
+  checkFormComplete();
+});
+
+// ==================== VALIDATION FORMULAIRE ====================
+function checkFormComplete(){
+  const complete = permisBase64 && plaqueBase64 && inputImmat.value.trim().length >= 4 && !sigEmpty;
+  document.getElementById('submitBtn').disabled = !complete;
+}
+
+// ==================== GÉNÉRATION PDF ====================
+// dateFinStr : null au moment de la création (essai en cours), renseigné à la clôture.
+function genererPDF(immat, siteNom, dateDebutStr, dateFinStr, signatureDataUrl, permisDataUrl){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const marginX = 20; let y = 25;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+  doc.text(dateFinStr ? 'Bon de prêt — Essai véhicule (clôturé)' : 'Bon de prêt — Essai véhicule', marginX, y); y += 6;
+  doc.setDrawColor(230, 90, 30); doc.setLineWidth(0.8); doc.line(marginX, y, 190, y); y += 12;
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  doc.text(`Site : ${siteNom}`, marginX, y); y += 8;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+  doc.text(`Immatriculation : ${immat}`, marginX, y); y += 9;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  doc.text(`Date et heure de début d'essai : ${dateDebutStr}`, marginX, y); y += 7;
+  if(dateFinStr){
+    doc.text(`Date et heure de retour du véhicule : ${dateFinStr}`, marginX, y); y += 7;
+  }
+  y += 6;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Permis de conduire du client', marginX, y); y += 4;
+  try{
+    doc.addImage(permisDataUrl, marginX, y, 75, 50);
+  } catch(e) { /* image illisible, on continue sans bloquer la génération */ }
+  y += 56;
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Engagement du client', marginX, y); y += 7;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
+  const texte = `En signant ce document, le client reconnaît emprunter le véhicule immatriculé ${immat} le ${dateDebutStr} dans le cadre d'un essai routier accompagné ou non par un vendeur du site de ${siteNom}. Le client s'engage à respecter le code de la route et l'ensemble des règles de circulation en vigueur, à disposer d'un permis de conduire valide pour la catégorie du véhicule prêté, et à prendre à sa charge la réparation de tout dommage causé au véhicule ainsi que le règlement de toute infraction, contravention, amende ou procès-verbal dressé pendant la durée de l'essai.`;
+  const lignes = doc.splitTextToSize(texte, 170);
+  doc.text(lignes, marginX, y); y += lignes.length * 5.2 + 14;
+
+  if(y > 240){ doc.addPage(); y = 25; }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text('Signature du client', marginX, y); y += 6;
+  doc.addImage(signatureDataUrl, 'PNG', marginX, y, 80, 30);
+  y += 40;
+
+  doc.setFontSize(9); doc.setTextColor(120);
+  doc.text('Littoral Vendée Automobiles — document généré automatiquement', marginX, 285);
+
+  return doc.output('datauristring').split(',')[1];
+}
+
+// ==================== SOUMISSION ====================
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const submitBtn = document.getElementById('submitBtn');
+  const statusLine = document.getElementById('statusLine');
+  submitBtn.disabled = true;
+  statusLine.textContent = 'Génération du bon en cours…';
+
+  if(APPS_SCRIPT_URL.includes('COLLE_ICI')){
+    statusLine.textContent = "L'URL du script Google (APPS_SCRIPT_URL) n'a pas encore été configurée dans le fichier.";
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const immat = inputImmat.value.trim();
+  const dateStr = formatDateHeure(dateHeureDebut);
+  const signatureDataUrl = sigCanvas.toDataURL('image/png');
+  const permisDataUrl = 'data:image/jpeg;base64,' + permisBase64;
+  const pdfBase64 = genererPDF(immat, currentSite, dateStr, null, signatureDataUrl, permisDataUrl);
+
+  const payload = {
+    action: 'nouveau',
+    site: currentSite,
+    immat: immat,
+    dateHeureDebut: isoDateHeure(dateHeureDebut),
+    permisBase64, plaqueBase64, pdfBase64,
+    signatureBase64: signatureDataUrl.split(',')[1]
+  };
+
+  try{
+    statusLine.textContent = 'Enregistrement en ligne…';
+    const res = await fetch(APPS_SCRIPT_URL, { method:'POST', body: JSON.stringify(payload) });
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error || 'Erreur inconnue');
+
+    // Téléchargement du PDF sur le téléphone du vendeur
+    const link = document.createElement('a');
+    link.href = 'data:application/pdf;base64,' + pdfBase64;
+    link.download = `${immat}_${isoDateHeure(dateHeureDebut).replace(/[:T]/g,'-')}_bon.pdf`;
+    link.click();
+
+    statusLine.textContent = '✓ Essai enregistré et bon téléchargé.';
+    setTimeout(resetForm, 1800);
+  } catch(err){
+    statusLine.textContent = "Erreur : " + err.message + " — réessaie.";
+    submitBtn.disabled = false;
+  }
+});
+
+function resetForm(){
+  permisBase64 = null; plaqueBase64 = null; dateHeureDebut = null; sigEmpty = true;
+  document.getElementById('inputPermis').value = '';
+  document.getElementById('inputPlaque').value = '';
+  document.getElementById('previewPermis').style.display = 'none';
+  document.getElementById('previewPlaque').style.display = 'none';
+  const btnPermis = document.getElementById('btnPermis'); btnPermis.classList.remove('filled'); btnPermis.textContent = '📷 Prendre en photo';
+  const btnPlaque = document.getElementById('btnPlaque'); btnPlaque.classList.remove('filled'); btnPlaque.textContent = '📷 Prendre en photo';
+  inputImmat.value = '';
+  document.getElementById('engagementText').textContent = "Le texte s'affichera ici une fois l'immatriculation saisie.";
+  document.getElementById('dateHeureDisplay').textContent = 'En attente de la 1ère photo…';
+  sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+  ['num1','num2','num3','num4'].forEach((id,i)=>{ const el=document.getElementById(id); el.classList.remove('done'); el.textContent = i+1; });
+  document.getElementById('statusLine').textContent = '';
+  checkFormComplete();
+}
+
+// ==================== ESSAIS EN COURS ====================
+let essaiACloturer = null;
+
+async function chargerEssaisEnCours(){
+  const listEl = document.getElementById('essaisList');
+  listEl.innerHTML = '<div class="empty-state">Chargement…</div>';
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=liste&site=${encodeURIComponent(currentSite)}`);
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error);
+    if(json.essais.length === 0){
+      listEl.innerHTML = '<div class="empty-state">Aucun essai en cours sur ce site.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    json.essais.forEach(essai=>{
+      const card = document.createElement('div');
+      card.className = 'essai-card';
+      card.innerHTML = `
+        <div>
+          <div class="essai-immat plate">${essai.immat}</div>
+          <div class="essai-heure">Départ : ${formatDateHeure(new Date(essai.debut))}</div>
+        </div>
+        <button class="close-btn">Retour</button>`;
+      card.querySelector('.close-btn').addEventListener('click', ()=> ouvrirModalCloture(essai));
+      listEl.appendChild(card);
+    });
+  } catch(err){
+    listEl.innerHTML = `<div class="empty-state">Erreur de chargement : ${err.message}</div>`;
+  }
+}
+
+function ouvrirModalCloture(essai){
+  essaiACloturer = essai;
+  document.getElementById('closeModalTitle').textContent = `Clôturer l'essai — ${essai.immat}`;
+  document.getElementById('closeModalText').textContent = `Confirmer le retour du véhicule maintenant, ${formatDateHeure(new Date())} ?`;
+  document.getElementById('closeOverlay').classList.add('active');
+}
+document.getElementById('closeCancel').addEventListener('click', ()=>{
+  document.getElementById('closeOverlay').classList.remove('active');
+});
+document.getElementById('closeConfirm').addEventListener('click', async ()=>{
+  if(!essaiACloturer) return;
+  const btn = document.getElementById('closeConfirm');
+  btn.disabled = true; btn.textContent = 'Récupération des données…';
+  try{
+    // 1. Récupère la photo du permis et la signature déjà archivées à la création
+    const detailRes = await fetch(`${APPS_SCRIPT_URL}?action=detail&id=${encodeURIComponent(essaiACloturer.id)}`);
+    const detail = await detailRes.json();
+    if(!detail.success) throw new Error(detail.error);
+
+    // 2. Régénère le bon complet avec la date de retour
+    btn.textContent = 'Génération du bon final…';
+    const dateFin = new Date();
+    const pdfFinalBase64 = genererPDF(
+      detail.immat,
+      detail.site,
+      formatDateHeure(new Date(detail.dateHeureDebut)),
+      formatDateHeure(dateFin),
+      'data:image/png;base64,' + detail.signatureBase64,
+      'data:image/jpeg;base64,' + detail.permisBase64
+    );
+
+    // 3. Clôture l'essai et archive le bon final
+    btn.textContent = 'Archivage…';
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'cloture', id: essaiACloturer.id, dateHeureFin: isoDateHeure(dateFin), pdfFinalBase64 })
+    });
+    const json = await res.json();
+    if(!json.success) throw new Error(json.error);
+    document.getElementById('closeOverlay').classList.remove('active');
+    chargerEssaisEnCours();
+  } catch(err){
+    alert("Erreur : " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmer le retour';
+  }
+});
+</script>
+</body>
+</html>
